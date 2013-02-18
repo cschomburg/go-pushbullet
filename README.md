@@ -4,6 +4,8 @@ go-pushbullet
 Simple Go client for [PushBullet](http://pushbullet.com), a webservice to push
 lists, addresses, links and more to your Android devices.
 
+Documentation available under: http://godoc.org/github.com/xconstruct/go-pushbullet
+
 ### Install ###
 
 	go get "github.com/xconstruct/go-pushbullet"
