@@ -22,11 +22,12 @@ const HOST = "https://www.pushbullet.com/api"
 // A Client connects to PushBullet with an API Key.
 type Client struct {
 	Key string
+	Client *http.Client
 }
 
 // New creates a new client with your personal API key.
 func New(apikey string) *Client {
-	return &Client{apikey}
+	return &Client{apikey, &http.Client{}}
 }
 
 // A Device represents an Android Device as reported by PushBullet.
@@ -59,7 +60,7 @@ func (c *Client) buildQuery() string {
 
 // Devices fetches a list of devices from PushBullet.
 func (c *Client) Devices() ([]*Device, error) {
-	resp, err := http.Get(c.buildQuery() + "/devices")
+	resp, err := c.Client.Get(c.buildQuery() + "/devices")
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +85,7 @@ func (c *Client) Devices() ([]*Device, error) {
 // Push pushes the data to a specific device registered with PushBullet.
 func (c *Client) Push(deviceId int, data url.Values) error {
 	data.Set("device_id", strconv.Itoa(deviceId))
-	resp, err := http.PostForm(c.buildQuery()+"/pushes", data)
+	resp, err := c.Client.PostForm(c.buildQuery()+"/pushes", data)
 	if err != nil {
 		return err
 	}
