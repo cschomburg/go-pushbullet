@@ -21,7 +21,7 @@ const HOST = "https://www.pushbullet.com/api"
 
 // A Client connects to PushBullet with an API Key.
 type Client struct {
-	Key string
+	Key    string
 	Client *http.Client
 }
 
