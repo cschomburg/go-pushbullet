@@ -6,6 +6,7 @@ import (
 	"github.com/xconstruct/go-pushbullet"
 	"log"
 	"os"
+	"path/filepath"
 )
 
 type Config struct {
@@ -69,8 +70,8 @@ func login() {
 }
 
 func readConfig() (Config, error) {
-	path := os.Getenv("XDG_CONFIG_HOME") + "/pushb"
-	f, err := os.Open(path + "/config.json")
+	cfgfile := filepath.Join(os.Getenv("HOME"), ".pushb.config.json")
+	f, err := os.Open(cfgfile)
 	if err != nil {
 		return Config{}, err
 	}
@@ -87,8 +88,8 @@ func readConfig() (Config, error) {
 }
 
 func writeConfig(cfg Config) {
-	path := os.Getenv("XDG_CONFIG_HOME") + "/pushb"
-	f, err := os.OpenFile(path+"/config.json", os.O_WRONLY|os.O_CREATE, 0600)
+	cfgfile := filepath.Join(os.Getenv("HOME"), ".pushb.config.json")
+	f, err := os.OpenFile(cfgfile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		log.Fatalln(err)
 	}
