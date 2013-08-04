@@ -130,7 +130,7 @@ Usage:
 Commands:
     login      Saves the api key in the config
     devices    Shows a list of registered devices
-	help       Shows this help
+    help       Shows this help
 
     address    Pushes an address to a device
     link       Pushes a link to a device
