@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/xconstruct/go-pushbullet"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -115,6 +116,16 @@ func pushNote() {
 
 	title := getArg(2, "")
 	body := getArg(3, "")
+
+	if body == "-" {
+		// read stdin
+		b, err := ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		body = string(b)
+	}
+
 	pb := pushbullet.New(cfg.ApiKey)
 	err = pb.PushNote(cfg.Devices[0].Id, title, body)
 	if err != nil {
