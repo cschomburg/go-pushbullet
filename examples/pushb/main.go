@@ -34,6 +34,10 @@ func main() {
 		login()
 	case "note":
 		pushNote()
+	case "link":
+		pushLink()
+	case "devices":
+		listDevices()
 	default:
 		printHelp()
 	}
@@ -115,6 +119,32 @@ func pushNote() {
 	err = pb.PushNote(cfg.Devices[0].Id, title, body)
 	if err != nil {
 		log.Fatalln(err)
+	}
+}
+
+func pushLink() {
+	cfg, err := readConfig()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	title := getArg(2, "")
+	link := getArg(3, "")
+	pb := pushbullet.New(cfg.ApiKey)
+	err = pb.PushLink(cfg.Devices[0].Id, title, link)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
+
+func listDevices() {
+	cfg, err := readConfig()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	for _, d := range cfg.Devices {
+		fmt.Printf("%10d\t%s\n", d.Id, d.Name)
 	}
 }
 
