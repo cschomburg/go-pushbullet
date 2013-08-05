@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/xconstruct/go-pushbullet"
+	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 )
 
 type Config struct {
@@ -33,6 +35,10 @@ func main() {
 		login()
 	case "note":
 		pushNote()
+	case "link":
+		pushLink()
+	case "devices":
+		listDevices()
 	default:
 		printHelp()
 	}
@@ -69,8 +75,8 @@ func login() {
 }
 
 func readConfig() (Config, error) {
-	path := os.Getenv("XDG_CONFIG_HOME") + "/pushb"
-	f, err := os.Open(path + "/config.json")
+	cfgfile := filepath.Join(os.Getenv("HOME"), ".pushb.config.json")
+	f, err := os.Open(cfgfile)
 	if err != nil {
 		return Config{}, err
 	}
@@ -87,8 +93,8 @@ func readConfig() (Config, error) {
 }
 
 func writeConfig(cfg Config) {
-	path := os.Getenv("XDG_CONFIG_HOME") + "/pushb"
-	f, err := os.OpenFile(path+"/config.json", os.O_WRONLY|os.O_CREATE, 0600)
+	cfgfile := filepath.Join(os.Getenv("HOME"), ".pushb.config.json")
+	f, err := os.OpenFile(cfgfile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -110,10 +116,46 @@ func pushNote() {
 
 	title := getArg(2, "")
 	body := getArg(3, "")
+
+	if body == "-" {
+		// read stdin
+		b, err := ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		body = string(b)
+	}
+
 	pb := pushbullet.New(cfg.ApiKey)
 	err = pb.PushNote(cfg.Devices[0].Id, title, body)
 	if err != nil {
 		log.Fatalln(err)
+	}
+}
+
+func pushLink() {
+	cfg, err := readConfig()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	title := getArg(2, "")
+	link := getArg(3, "")
+	pb := pushbullet.New(cfg.ApiKey)
+	err = pb.PushLink(cfg.Devices[0].Id, title, link)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
+
+func listDevices() {
+	cfg, err := readConfig()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	for _, d := range cfg.Devices {
+		fmt.Printf("%10d\t%s\n", d.Id, d.Name)
 	}
 }
 
@@ -130,7 +172,7 @@ Usage:
 Commands:
     login      Saves the api key in the config
     devices    Shows a list of registered devices
-	help       Shows this help
+    help       Shows this help
 
     address    Pushes an address to a device
     link       Pushes a link to a device
