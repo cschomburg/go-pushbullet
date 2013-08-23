@@ -10,11 +10,14 @@ Example client:
 package pushbullet
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 const HOST = "https://www.pushbullet.com/api"
@@ -54,18 +57,29 @@ type deviceResponse struct {
 	SharedDevices []*Device `json:"shared_devices"`
 }
 
-func (c *Client) buildQuery() string {
-	u, err := url.Parse(HOST)
+func (c *Client) buildRequest(endpoint string, data url.Values) *http.Request {
+	r, err := http.NewRequest("GET", HOST+endpoint, nil)
 	if err != nil {
 		panic(err)
 	}
-	u.User = url.User(c.Key)
-	return u.String()
+
+	// appengine sdk requires us to set the auth header by hand
+	u := url.UserPassword(c.Key, "")
+	r.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(u.String())))
+
+	if data != nil {
+		r.Method = "POST"
+		r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		r.Body = ioutil.NopCloser(strings.NewReader(data.Encode()))
+	}
+
+	return r
 }
 
 // Devices fetches a list of devices from PushBullet.
 func (c *Client) Devices() ([]*Device, error) {
-	resp, err := c.Client.Get(c.buildQuery() + "/devices")
+	req := c.buildRequest("/devices", nil)
+	resp, err := c.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +104,8 @@ func (c *Client) Devices() ([]*Device, error) {
 // Push pushes the data to a specific device registered with PushBullet.
 func (c *Client) Push(deviceId int, data url.Values) error {
 	data.Set("device_id", strconv.Itoa(deviceId))
-	resp, err := c.Client.PostForm(c.buildQuery()+"/pushes", data)
+	req := c.buildRequest("/pushes", data)
+	resp, err := c.Client.Do(req)
 	if err != nil {
 		return err
 	}
