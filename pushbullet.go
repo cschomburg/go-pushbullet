@@ -27,7 +27,12 @@ type Client struct {
 
 // New creates a new client with your personal API key.
 func New(apikey string) *Client {
-	return &Client{apikey, &http.Client{}}
+	return &Client{apikey, http.DefaultClient}
+}
+
+// New creates a new client with your personal API key and the given http Client
+func NewWithClient(apikey string, client *http.Client) *Client {
+	return &Client{apikey, client}
 }
 
 // A Device represents an Android Device as reported by PushBullet.
