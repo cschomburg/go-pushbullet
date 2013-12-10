@@ -20,7 +20,7 @@ import (
 	"strings"
 )
 
-const HOST = "https://www.pushbullet.com/api"
+const HOST = "https://api.pushbullet.com/api"
 
 // A Client connects to PushBullet with an API Key.
 type Client struct {
