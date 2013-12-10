@@ -47,7 +47,7 @@ type Device struct {
 		Model          string
 		AndroidVersion string `json:"android_version"`
 		SdkVersion     string `json:"sdk_version"`
-		AppVersion     string `json:"app_version"`
+		AppVersion     int    `json:"app_version"`
 		Nickname       string
 	}
 }
