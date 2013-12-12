@@ -20,7 +20,7 @@ import (
 	"strings"
 )
 
-const HOST = "https://www.pushbullet.com/api"
+const HOST = "https://api.pushbullet.com/api"
 
 // A Client connects to PushBullet with an API Key.
 type Client struct {
@@ -47,7 +47,7 @@ type Device struct {
 		Model          string
 		AndroidVersion string `json:"android_version"`
 		SdkVersion     string `json:"sdk_version"`
-		AppVersion     string `json:"app_version"`
+		AppVersion     int    `json:"app_version"`
 		Nickname       string
 	}
 }
