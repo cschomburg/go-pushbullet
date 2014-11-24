@@ -3,11 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/xconstruct/go-pushbullet"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+
+	"github.com/xconstruct/go-pushbullet"
 )
 
 type Config struct {
@@ -16,7 +17,7 @@ type Config struct {
 }
 
 type Device struct {
-	Id   int    `json:"id"`
+	Iden string `json:"iden"`
 	Name string `json:"name"`
 }
 
@@ -62,12 +63,12 @@ func login() {
 		log.Fatalln(err)
 	}
 	for _, dev := range devs {
-		name := dev.Extras.Nickname
+		name := dev.Nickname
 		if name == "" {
-			name = dev.Extras.Model
+			name = dev.Model
 		}
 		cfg.Devices = append(cfg.Devices, Device{
-			Id:   dev.Id,
+			Iden: dev.Iden,
 			Name: name,
 		})
 	}
@@ -127,7 +128,7 @@ func pushNote() {
 	}
 
 	pb := pushbullet.New(cfg.ApiKey)
-	err = pb.PushNote(cfg.Devices[0].Id, title, body)
+	err = pb.PushNote(cfg.Devices[0].Iden, title, body)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -142,7 +143,7 @@ func pushLink() {
 	title := getArg(2, "")
 	link := getArg(3, "")
 	pb := pushbullet.New(cfg.ApiKey)
-	err = pb.PushLink(cfg.Devices[0].Id, title, link)
+	err = pb.PushLink(cfg.Devices[0].Iden, title, link, "")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -155,7 +156,7 @@ func listDevices() {
 	}
 
 	for _, d := range cfg.Devices {
-		fmt.Printf("%10d\t%s\n", d.Id, d.Name)
+		fmt.Printf("%10s\t%s\n", d.Iden, d.Name)
 	}
 }
 
