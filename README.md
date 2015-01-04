@@ -19,7 +19,7 @@ if err != nil {
 	panic(err)
 }
 
-err = pb.PushNote(devs[0].Id, "Hello!", "Hi from go-pushbullet!")
+err = pb.PushNote(devs[0].Iden, "Hello!", "Hi from go-pushbullet!")
 if err != nil {
 	panic(err)
 }
