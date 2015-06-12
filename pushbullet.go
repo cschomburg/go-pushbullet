@@ -128,11 +128,49 @@ func (c *Client) Devices() ([]*Device, error) {
 	return devices, nil
 }
 
+type User struct {
+	Iden            string      `json:"iden"`
+	Email           string      `json:"email"`
+	EmailNormalized string      `json:"email_normalized"`
+	Created         float64     `json:"created"`
+	Modified        float64     `json:"modified"`
+	Name            string      `json:"name"`
+	ImageUrl        string      `json:"image_url"`
+	Preferences     interface{} `json:"preferences"`
+}
+
+func (c *Client) Me() (*User, error) {
+	req := c.buildRequest("/users/me", nil)
+	resp, err := c.Client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		var errjson errorResponse
+		dec := json.NewDecoder(resp.Body)
+		err = dec.Decode(&errjson)
+		if err == nil {
+			return nil, &errjson.ErrResponse
+		}
+
+		return nil, errors.New(resp.Status)
+	}
+
+	var userResponse User
+	dec := json.NewDecoder(resp.Body)
+	err = dec.Decode(&userResponse)
+	if err != nil {
+		return nil, err
+	}
+	return &userResponse, nil
+}
+
 // Push pushes the data to a specific device registered with PushBullet.  The
 // 'data' parameter is marshaled to JSON and sent as the request body.  Most
 // users should call one of PusNote, PushLink, PushAddress, or PushList.
-func (c *Client) Push(data interface{}) error {
-	req := c.buildRequest("/pushes", data)
+func (c *Client) Push(endPoint string, data interface{}) error {
+	req := c.buildRequest(endPoint, data)
 	resp, err := c.Client.Do(req)
 	if err != nil {
 		return err
@@ -168,7 +206,7 @@ func (c *Client) PushNote(iden string, title, body string) error {
 		Title: title,
 		Body:  body,
 	}
-	return c.Push(data)
+	return c.Push("/pushes", data)
 }
 
 type Address struct {
@@ -186,7 +224,7 @@ func (c *Client) PushAddress(iden string, name, address string) error {
 		Name:    name,
 		Address: address,
 	}
-	return c.Push(data)
+	return c.Push("/pushes", data)
 }
 
 type List struct {
@@ -204,7 +242,7 @@ func (c *Client) PushList(iden string, title string, items []string) error {
 		Title: title,
 		Items: items,
 	}
-	return c.Push(data)
+	return c.Push("/pushes", data)
 }
 
 type Link struct {
@@ -224,5 +262,34 @@ func (c *Client) PushLink(iden, title, u, body string) error {
 		URL:   u,
 		Body:  body,
 	}
-	return c.Push(data)
+	return c.Push("/pushes", data)
+}
+
+type EmpheralPush struct {
+	Type             string `json:"type"`
+	PackageName      string `json:"package_name"`
+	SourceUserIden   string `json:"source_user_iden"`
+	TargetDeviceIden string `json:"target_device_iden"`
+	ConversationIden string `json:"conversation_iden"`
+	Message          string `json:"message"`
+}
+
+type Empheral struct {
+	Type string       `json:"type"`
+	Push EmpheralPush `json:"push"`
+}
+
+func (c *Client) PushSMS(userIden, deviceIden, phoneNumber, message string) error {
+	data := Empheral{
+		Type: "push",
+		Push: EmpheralPush{
+			Type:             "messaging_extension_reply",
+			PackageName:      "com.pushbullet.android",
+			SourceUserIden:   userIden,
+			TargetDeviceIden: deviceIden,
+			ConversationIden: phoneNumber,
+			Message:          message,
+		},
+	}
+	return c.Push("/ephemerals", data)
 }
