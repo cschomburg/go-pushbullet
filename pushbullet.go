@@ -265,7 +265,7 @@ func (c *Client) PushLink(iden, title, u, body string) error {
 	return c.Push("/pushes", data)
 }
 
-type EmpheralPush struct {
+type EphemeralPush struct {
 	Type             string `json:"type"`
 	PackageName      string `json:"package_name"`
 	SourceUserIden   string `json:"source_user_iden"`
@@ -274,15 +274,15 @@ type EmpheralPush struct {
 	Message          string `json:"message"`
 }
 
-type Empheral struct {
-	Type string       `json:"type"`
-	Push EmpheralPush `json:"push"`
+type Ephemeral struct {
+	Type string        `json:"type"`
+	Push EphemeralPush `json:"push"`
 }
 
 func (c *Client) PushSMS(userIden, deviceIden, phoneNumber, message string) error {
-	data := Empheral{
+	data := Ephemeral{
 		Type: "push",
-		Push: EmpheralPush{
+		Push: EphemeralPush{
 			Type:             "messaging_extension_reply",
 			PackageName:      "com.pushbullet.android",
 			SourceUserIden:   userIden,
