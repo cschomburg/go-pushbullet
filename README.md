@@ -1,7 +1,11 @@
 go-pushbullet
 =============
 
-Simple Go client for [PushBullet](http://pushbullet.com), a webservice to push
+[![Build](https://img.shields.io/travis/xconstruct/go-pushbullet.svg?style=flat-square)](https://travis-ci.org/xconstruct/go-pushbullet)
+[![API Documentation](https://img.shields.io/badge/api-GoDoc-blue.svg?style=flat-square)](https://godoc.org/github.com/xconstruct/go-pushbullet)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](http://opensource.org/licenses/MIT)
+
+Simple Go client for [Pushbullet](http://pushbullet.com), a webservice to push
 lists, addresses, links and more to your Android devices.
 
 Documentation available under: http://godoc.org/github.com/xconstruct/go-pushbullet
