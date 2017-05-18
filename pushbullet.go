@@ -22,6 +22,8 @@ import (
 	"net/url"
 )
 
+var EndpointURL = "https://api.pushbullet.com/v2"
+
 // Endpoint allows manipulation of pushbullet API endpoint for testing
 type Endpoint struct {
 	URL string
@@ -36,13 +38,13 @@ type Client struct {
 
 // New creates a new client with your personal API key.
 func New(apikey string) *Client {
-	endpoint := Endpoint{URL: "https://api.pushbullet.com/v2"}
+	endpoint := Endpoint{URL: EndpointURL}
 	return &Client{apikey, http.DefaultClient, endpoint}
 }
 
 // New creates a new client with your personal API key and the given http Client
 func NewWithClient(apikey string, client *http.Client) *Client {
-	endpoint := Endpoint{URL: "https://api.pushbullet.com/v2"}
+	endpoint := Endpoint{URL: EndpointURL}
 	return &Client{apikey, client, endpoint}
 }
 
