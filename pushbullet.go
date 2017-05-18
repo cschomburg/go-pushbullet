@@ -22,38 +22,46 @@ import (
 	"net/url"
 )
 
-var Endpoint = "https://api.pushbullet.com/v2"
+// Endpoint allows manipulation of pushbullet API endpoint for testing
+type Endpoint struct {
+	URL string
+}
 
 // A Client connects to PushBullet with an API Key.
 type Client struct {
 	Key    string
 	Client *http.Client
+	Endpoint
 }
 
 // New creates a new client with your personal API key.
 func New(apikey string) *Client {
-	return &Client{apikey, http.DefaultClient}
+	endpoint := Endpoint{URL: "https://api.pushbullet.com/v2"}
+	return &Client{apikey, http.DefaultClient, endpoint}
 }
 
 // New creates a new client with your personal API key and the given http Client
 func NewWithClient(apikey string, client *http.Client) *Client {
-	return &Client{apikey, client}
+	endpoint := Endpoint{URL: "https://api.pushbullet.com/v2"}
+	return &Client{apikey, client, endpoint}
 }
 
 // A Device is a PushBullet device
 type Device struct {
-	Iden         string  `json:"iden"`
-	PushToken    string  `json:"push_token"`
-	AppVersion   int     `json:"app_version"`
-	Fingerprint  string  `json:"fingerprint"`
-	Active       bool    `json:"active"`
-	Nickname     string  `json:"nickname"`
-	Manufacturer string  `json:"manufacturer"`
-	Type         string  `json:"type"`
-	Created      float32 `json:"created"`
-	Modified     float32 `json:"modified"`
-	Model        string  `json:"model"`
-	Pushable     bool    `json:"pushable"`
+	Iden              string  `json:"iden"`
+	Active            bool    `json:"active"`
+	Created           float32 `json:"created"`
+	Modified          float32 `json:"modified"`
+	Icon              string  `json:"icon"`
+	Nickname          string  `json:"nickname"`
+	GeneratedNickname string  `json:"generated_nickname"`
+	Manufacturer      string  `json:"manufacturer"`
+	Model             string  `json:"model"`
+	AppVersion        int     `json:"app_version"`
+	Fingerprint       string  `json:"fingerprint"`
+	KeyFingerprint    string  `json:"key_fingerprint"`
+	PushToken         string  `json:"push_token"`
+	HasSms            string  `json:"has_sms"`
 }
 
 // ErrResponse is an error returned by the PushBullet API
@@ -77,7 +85,7 @@ type deviceResponse struct {
 }
 
 func (c *Client) buildRequest(object string, data interface{}) *http.Request {
-	r, err := http.NewRequest("GET", Endpoint+object, nil)
+	r, err := http.NewRequest("GET", c.Endpoint.URL+object, nil)
 	if err != nil {
 		panic(err)
 	}
