@@ -22,38 +22,49 @@ import (
 	"net/url"
 )
 
-var Endpoint = "https://api.pushbullet.com/v2"
+// EndpointURL sets the default URL for the Pushbullet API
+var EndpointURL = "https://api.pushbullet.com/v2"
+
+// Endpoint allows manipulation of pushbullet API endpoint for testing
+type Endpoint struct {
+	URL string
+}
 
 // A Client connects to PushBullet with an API Key.
 type Client struct {
 	Key    string
 	Client *http.Client
+	Endpoint
 }
 
 // New creates a new client with your personal API key.
 func New(apikey string) *Client {
-	return &Client{apikey, http.DefaultClient}
+	endpoint := Endpoint{URL: EndpointURL}
+	return &Client{apikey, http.DefaultClient, endpoint}
 }
 
-// New creates a new client with your personal API key and the given http Client
+// NewWithClient creates a new client with your personal API key and the given http Client
 func NewWithClient(apikey string, client *http.Client) *Client {
-	return &Client{apikey, client}
+	endpoint := Endpoint{URL: EndpointURL}
+	return &Client{apikey, client, endpoint}
 }
 
 // A Device is a PushBullet device
 type Device struct {
-	Iden         string  `json:"iden"`
-	PushToken    string  `json:"push_token"`
-	AppVersion   int     `json:"app_version"`
-	Fingerprint  string  `json:"fingerprint"`
-	Active       bool    `json:"active"`
-	Nickname     string  `json:"nickname"`
-	Manufacturer string  `json:"manufacturer"`
-	Type         string  `json:"type"`
-	Created      float32 `json:"created"`
-	Modified     float32 `json:"modified"`
-	Model        string  `json:"model"`
-	Pushable     bool    `json:"pushable"`
+	Iden              string  `json:"iden"`
+	Active            bool    `json:"active"`
+	Created           float32 `json:"created"`
+	Modified          float32 `json:"modified"`
+	Icon              string  `json:"icon"`
+	Nickname          string  `json:"nickname"`
+	GeneratedNickname string  `json:"generated_nickname"`
+	Manufacturer      string  `json:"manufacturer"`
+	Model             string  `json:"model"`
+	AppVersion        int     `json:"app_version"`
+	Fingerprint       string  `json:"fingerprint"`
+	KeyFingerprint    string  `json:"key_fingerprint"`
+	PushToken         string  `json:"push_token"`
+	HasSms            string  `json:"has_sms"`
 }
 
 // ErrResponse is an error returned by the PushBullet API
@@ -77,7 +88,7 @@ type deviceResponse struct {
 }
 
 func (c *Client) buildRequest(object string, data interface{}) *http.Request {
-	r, err := http.NewRequest("GET", Endpoint+object, nil)
+	r, err := http.NewRequest("GET", c.Endpoint.URL+object, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -128,6 +139,7 @@ func (c *Client) Devices() ([]*Device, error) {
 	return devices, nil
 }
 
+// User represents the User object for pushbullet
 type User struct {
 	Iden            string      `json:"iden"`
 	Email           string      `json:"email"`
@@ -139,6 +151,7 @@ type User struct {
 	Preferences     interface{} `json:"preferences"`
 }
 
+// Me returns the user object for the pushbullet user
 func (c *Client) Me() (*User, error) {
 	req := c.buildRequest("/users/me", nil)
 	resp, err := c.Client.Do(req)
@@ -191,6 +204,7 @@ func (c *Client) Push(endPoint string, data interface{}) error {
 	return nil
 }
 
+// Note exposes the required and optional fields of the Pushbullet push type=note
 type Note struct {
 	Iden  string `json:"device_iden,omitempty"`
 	Type  string `json:"type"`
@@ -245,6 +259,7 @@ func (c *Client) PushList(iden string, title string, items []string) error {
 	return c.Push("/pushes", data)
 }
 
+// Link exposes the required and optional fields of the Pushbullet push type=link
 type Link struct {
 	Iden  string `json:"device_iden"`
 	Type  string `json:"type"`
@@ -265,6 +280,7 @@ func (c *Client) PushLink(iden, title, u, body string) error {
 	return c.Push("/pushes", data)
 }
 
+// EphemeralPush  exposes the required fields of the Pushbullet ephemeral object
 type EphemeralPush struct {
 	Type             string `json:"type"`
 	PackageName      string `json:"package_name"`
@@ -274,11 +290,13 @@ type EphemeralPush struct {
 	Message          string `json:"message"`
 }
 
+// Ephemeral constructs the Ephemeral object for pushing which requires the EphemeralPush object
 type Ephemeral struct {
 	Type string        `json:"type"`
 	Push EphemeralPush `json:"push"`
 }
 
+// PushSMS sends an SMS message with pushbullet
 func (c *Client) PushSMS(userIden, deviceIden, phoneNumber, message string) error {
 	data := Ephemeral{
 		Type: "push",
