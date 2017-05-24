@@ -282,42 +282,6 @@ func (c *Client) PushNote(iden string, title, body string) error {
 	return c.Push("/pushes", data)
 }
 
-type Address struct {
-	Iden    string `json:"device_iden"`
-	Type    string `json:"type"`
-	Name    string `json:"name"`
-	Address string `json:"address"`
-}
-
-// PushAddress pushes a geo address with name and address to a specific PushBullet device.
-func (c *Client) PushAddress(iden string, name, address string) error {
-	data := Address{
-		Iden:    iden,
-		Type:    "address",
-		Name:    name,
-		Address: address,
-	}
-	return c.Push("/pushes", data)
-}
-
-type List struct {
-	Iden  string   `json:"device_iden"`
-	Type  string   `json:"type"`
-	Title string   `json:"title"`
-	Items []string `json:"items"`
-}
-
-// PushList pushes a list with name and a slice of items to a specific PushBullet device.
-func (c *Client) PushList(iden string, title string, items []string) error {
-	data := List{
-		Iden:  iden,
-		Type:  "list",
-		Title: title,
-		Items: items,
-	}
-	return c.Push("/pushes", data)
-}
-
 // Link exposes the required and optional fields of the Pushbullet push type=link
 type Link struct {
 	Iden  string `json:"device_iden"`
