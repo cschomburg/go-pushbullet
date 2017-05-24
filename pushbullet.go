@@ -161,41 +161,17 @@ func (c *Client) Device(nickname string) (*Device, error) {
 
 // PushNote sends a note to the specific device with the given title and body
 func (d *Device) PushNote(title, body string) error {
-	data := Note{
-		Iden:  d.Iden,
-		Type:  "note",
-		Title: title,
-		Body:  body,
-	}
-	return d.Client.Push("/pushes", data)
+	return d.Client.PushNote(d.Iden, title, body)
 }
 
 // PushLink sends a link to the specific device with the given title and url
 func (d *Device) PushLink(title, u, body string) error {
-	data := Link{
-		Iden:  d.Iden,
-		Type:  "link",
-		Title: title,
-		URL:   u,
-		Body:  body,
-	}
-	return d.Client.Push("/pushes", data)
+	return d.Client.PushLink(d.Iden, title, u, body)
 }
 
 // PushSMS sends an SMS to the specific user from the device with the given title and url
 func (d *Device) PushSMS(deviceIden, phoneNumber, message string) error {
-	data := Ephemeral{
-		Type: "push",
-		Push: EphemeralPush{
-			Type:             "messaging_extension_reply",
-			PackageName:      "com.pushbullet.android",
-			SourceUserIden:   d.Iden,
-			TargetDeviceIden: deviceIden,
-			ConversationIden: phoneNumber,
-			Message:          message,
-		},
-	}
-	return d.Client.Push("/ephemerals", data)
+	return d.Client.PushSMS(d.Iden, deviceIden, phoneNumber, message)
 }
 
 // User represents the User object for pushbullet
