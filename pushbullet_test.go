@@ -133,10 +133,62 @@ func TestDevices(t *testing.T) {
 	defer server.Close()
 	pb := New(k)
 	pb.Endpoint.URL = server.URL
+	d.Client = pb
 	devs, err := pb.Devices()
 	assert.NoError(t, err)
 	assert.Len(t, devs, 1)
 	assert.Equal(t, d, devs[0])
+}
+
+func TestDeviceWithNickname(t *testing.T) {
+	server := PushbulletResponseStub()
+	defer server.Close()
+	pb := New(k)
+	pb.Endpoint.URL = server.URL
+	dev, err := pb.Device(d.Nickname)
+	assert.NoError(t, err)
+	assert.Equal(t, d.Nickname, dev.Nickname)
+	assert.Equal(t, pb, dev.Client)
+}
+
+func TestDeviceWithNicknameMissing(t *testing.T) {
+	server := PushbulletResponseStub()
+	defer server.Close()
+	pb := New(k)
+	pb.Endpoint.URL = server.URL
+	dev, err := pb.Device("MISSING")
+	assert.Error(t, err)
+	assert.Nil(t, dev)
+}
+
+func TestDevicePushNote(t *testing.T) {
+	server := PushbulletResponseStub()
+	defer server.Close()
+	pb := New(k)
+	pb.Endpoint.URL = server.URL
+	dev, _ := pb.Device(d.Nickname)
+	err := dev.PushNote(n.Title, n.Body)
+	assert.NoError(t, err)
+}
+
+func TestDevicePushLink(t *testing.T) {
+	server := PushbulletResponseStub()
+	defer server.Close()
+	pb := New(k)
+	pb.Endpoint.URL = server.URL
+	dev, _ := pb.Device(d.Nickname)
+	err := dev.PushLink(l.Title, l.URL, l.Body)
+	assert.NoError(t, err)
+}
+
+func TestDevicePushSMS(t *testing.T) {
+	server := PushbulletResponseStub()
+	defer server.Close()
+	pb := New(k)
+	pb.Endpoint.URL = server.URL
+	dev, _ := pb.Device(d.Nickname)
+	err := dev.PushSMS(s.TargetDeviceIden, s.ConversationIden, s.Message)
+	assert.NoError(t, err)
 }
 
 func TestDevicesError(t *testing.T) {

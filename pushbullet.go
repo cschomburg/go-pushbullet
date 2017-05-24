@@ -65,6 +65,7 @@ type Device struct {
 	KeyFingerprint    string  `json:"key_fingerprint"`
 	PushToken         string  `json:"push_token"`
 	HasSms            string  `json:"has_sms"`
+	Client            *Client `json:"-"`
 }
 
 // ErrResponse is an error returned by the PushBullet API
@@ -135,8 +136,66 @@ func (c *Client) Devices() ([]*Device, error) {
 		return nil, err
 	}
 
+	for i := range devResp.Devices {
+		devResp.Devices[i].Client = c
+	}
 	devices := append(devResp.Devices, devResp.SharedDevices...)
 	return devices, nil
+}
+
+// Device fetches an device with a given nickname from PushBullet.
+func (c *Client) Device(nickname string) (*Device, error) {
+	devices, err := c.Devices()
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range devices {
+		if devices[i].Nickname == nickname {
+			devices[i].Client = c
+			return devices[i], nil
+		}
+	}
+	return nil, errors.New("Device not found!")
+}
+
+// PushNote sends a note to the specific device with the given title and body
+func (d *Device) PushNote(title, body string) error {
+	data := Note{
+		Iden:  d.Iden,
+		Type:  "note",
+		Title: title,
+		Body:  body,
+	}
+	return d.Client.Push("/pushes", data)
+}
+
+// PushLink sends a link to the specific device with the given title and url
+func (d *Device) PushLink(title, u, body string) error {
+	data := Link{
+		Iden:  d.Iden,
+		Type:  "link",
+		Title: title,
+		URL:   u,
+		Body:  body,
+	}
+	return d.Client.Push("/pushes", data)
+}
+
+// PushSMS sends an SMS to the specific user from the device with the given title and url
+func (d *Device) PushSMS(deviceIden, phoneNumber, message string) error {
+	data := Ephemeral{
+		Type: "push",
+		Push: EphemeralPush{
+			Type:             "messaging_extension_reply",
+			PackageName:      "com.pushbullet.android",
+			SourceUserIden:   d.Iden,
+			TargetDeviceIden: deviceIden,
+			ConversationIden: phoneNumber,
+			Message:          message,
+		},
+	}
+	return d.Client.Push("/ephemerals", data)
 }
 
 // User represents the User object for pushbullet
