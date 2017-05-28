@@ -38,4 +38,15 @@ err = pb.PushSMS(user.Iden, devs[0].Iden, "<TARGET_PHONE_NUMBER>", "Sms text")
 if err != nil {
 	panic(err)
 }
+
+You can also retrieve a pushbullet device by nickname, and call the same methods as you would with the pushbbulet client
+dev, err := pb.Device("My Phone")
+if err != nil {
+	panic(err)
+}
+
+err = dev.PushNote("Hello!", "Straight to device with just a title and body")
+if err != nil {
+	panic(err)
+}
 ```

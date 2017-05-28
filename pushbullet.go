@@ -22,6 +22,9 @@ import (
 	"net/url"
 )
 
+// ErrDeviceNotFound is raised when device nickname is not found on pusbullet server
+var ErrDeviceNotFound = errors.New("Device not found")
+
 // EndpointURL sets the default URL for the Pushbullet API
 var EndpointURL = "https://api.pushbullet.com/v2"
 
@@ -156,7 +159,7 @@ func (c *Client) Device(nickname string) (*Device, error) {
 			return devices[i], nil
 		}
 	}
-	return nil, errors.New("Device not found!")
+	return nil, ErrDeviceNotFound
 }
 
 // PushNote sends a note to the specific device with the given title and body
