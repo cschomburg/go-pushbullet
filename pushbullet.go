@@ -22,6 +22,9 @@ import (
 	"net/url"
 )
 
+// ErrDeviceNotFound is raised when device nickname is not found on pusbullet server
+var ErrDeviceNotFound = errors.New("Device not found")
+
 // EndpointURL sets the default URL for the Pushbullet API
 var EndpointURL = "https://api.pushbullet.com/v2"
 
@@ -65,6 +68,7 @@ type Device struct {
 	KeyFingerprint    string  `json:"key_fingerprint"`
 	PushToken         string  `json:"push_token"`
 	HasSms            string  `json:"has_sms"`
+	Client            *Client `json:"-"`
 }
 
 // ErrResponse is an error returned by the PushBullet API
@@ -135,8 +139,42 @@ func (c *Client) Devices() ([]*Device, error) {
 		return nil, err
 	}
 
+	for i := range devResp.Devices {
+		devResp.Devices[i].Client = c
+	}
 	devices := append(devResp.Devices, devResp.SharedDevices...)
 	return devices, nil
+}
+
+// Device fetches an device with a given nickname from PushBullet.
+func (c *Client) Device(nickname string) (*Device, error) {
+	devices, err := c.Devices()
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range devices {
+		if devices[i].Nickname == nickname {
+			devices[i].Client = c
+			return devices[i], nil
+		}
+	}
+	return nil, ErrDeviceNotFound
+}
+
+// PushNote sends a note to the specific device with the given title and body
+func (d *Device) PushNote(title, body string) error {
+	return d.Client.PushNote(d.Iden, title, body)
+}
+
+// PushLink sends a link to the specific device with the given title and url
+func (d *Device) PushLink(title, u, body string) error {
+	return d.Client.PushLink(d.Iden, title, u, body)
+}
+
+// PushSMS sends an SMS to the specific user from the device with the given title and url
+func (d *Device) PushSMS(deviceIden, phoneNumber, message string) error {
+	return d.Client.PushSMS(d.Iden, deviceIden, phoneNumber, message)
 }
 
 // User represents the User object for pushbullet
@@ -219,42 +257,6 @@ func (c *Client) PushNote(iden string, title, body string) error {
 		Type:  "note",
 		Title: title,
 		Body:  body,
-	}
-	return c.Push("/pushes", data)
-}
-
-type Address struct {
-	Iden    string `json:"device_iden"`
-	Type    string `json:"type"`
-	Name    string `json:"name"`
-	Address string `json:"address"`
-}
-
-// PushAddress pushes a geo address with name and address to a specific PushBullet device.
-func (c *Client) PushAddress(iden string, name, address string) error {
-	data := Address{
-		Iden:    iden,
-		Type:    "address",
-		Name:    name,
-		Address: address,
-	}
-	return c.Push("/pushes", data)
-}
-
-type List struct {
-	Iden  string   `json:"device_iden"`
-	Type  string   `json:"type"`
-	Title string   `json:"title"`
-	Items []string `json:"items"`
-}
-
-// PushList pushes a list with name and a slice of items to a specific PushBullet device.
-func (c *Client) PushList(iden string, title string, items []string) error {
-	data := List{
-		Iden:  iden,
-		Type:  "list",
-		Title: title,
-		Items: items,
 	}
 	return c.Push("/pushes", data)
 }
