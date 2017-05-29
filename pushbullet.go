@@ -60,7 +60,7 @@ type Device struct {
 	Modified          float32 `json:"modified"`
 	Icon              string  `json:"icon"`
 	Nickname          string  `json:"nickname"`
-	GeneratedNickname string  `json:"generated_nickname"`
+	GeneratedNickname bool    `json:"generated_nickname"`
 	Manufacturer      string  `json:"manufacturer"`
 	Model             string  `json:"model"`
 	AppVersion        int     `json:"app_version"`
