@@ -6,7 +6,7 @@ go-pushbullet
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](http://opensource.org/licenses/MIT)
 
 Simple Go client for [Pushbullet](http://pushbullet.com), a webservice to push
-lists, addresses, links and more to your Android devices.
+links, notes and more to your Android devices.
 
 Documentation available under: http://godoc.org/github.com/xconstruct/go-pushbullet
 
@@ -38,8 +38,10 @@ err = pb.PushSMS(user.Iden, devs[0].Iden, "<TARGET_PHONE_NUMBER>", "Sms text")
 if err != nil {
 	panic(err)
 }
+```
 
-You can also retrieve a pushbullet device by nickname, and call the same methods as you would with the pushbbulet client
+You can also retrieve a pushbullet device by nickname, and call the same methods as you would with the pushbullet client  
+```go
 dev, err := pb.Device("My Phone")
 if err != nil {
 	panic(err)
@@ -49,8 +51,10 @@ err = dev.PushNote("Hello!", "Straight to device with just a title and body")
 if err != nil {
 	panic(err)
 }
+```
 
-Channels are also supported in a similar manner
+Channels are also supported in a similar manner  
+```go
 subs, err := pb.Subscriptions()
 if err != nil {
 	panic(err)
