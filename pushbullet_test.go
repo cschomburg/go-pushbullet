@@ -11,15 +11,16 @@ import (
 )
 
 var d = &Device{
-	Active:       true,
-	AppVersion:   8623,
-	Created:      1.412047948579029e+09,
-	Iden:         "ujpah72o0sjAoRtnM0jc",
-	Manufacturer: "Apple",
-	Model:        "iPhone 5s (GSM)",
-	Modified:     1.412047948579031e+09,
-	Nickname:     "Elon Musk's iPhone",
-	PushToken:    "production:f73be0ee7877c8c7fa69b1468cde764f",
+	Active:            true,
+	AppVersion:        8623,
+	Created:           1.412047948579029e+09,
+	Iden:              "ujpah72o0sjAoRtnM0jc",
+	Manufacturer:      "Apple",
+	Model:             "iPhone 5s (GSM)",
+	Modified:          1.412047948579031e+09,
+	Nickname:          "Elon Musk's iPhone",
+	GeneratedNickname: true,
+	PushToken:         "production:f73be0ee7877c8c7fa69b1468cde764f",
 }
 
 var n = &Note{
