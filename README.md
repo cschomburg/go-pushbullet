@@ -49,4 +49,26 @@ err = dev.PushNote("Hello!", "Straight to device with just a title and body")
 if err != nil {
 	panic(err)
 }
+
+Channels are also supported in a similar manner
+subs, err := pb.Subscriptions()
+if err != nil {
+	panic(err)
+}
+
+err = pb.PushNoteToChannel(subs[0].Channel.Tag, "Hello!", "Hi from go-pushbullet!")
+if err != nil {
+	panic(err)
+}
+
+sub, err := pb.Subscription("MyChannelTag")
+if err != nil {
+	panic(err)
+}
+
+err = sub.PushNote("Hello!", "Straight to Channel with just a title and body")
+if err != nil {
+	panic(err)
+}
+
 ```

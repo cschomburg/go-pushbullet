@@ -310,6 +310,24 @@ func TestPushNote(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestPushLinkToChannel(t *testing.T) {
+	server := PushbulletResponseStub()
+	defer server.Close()
+	pb := New(k)
+	pb.Endpoint.URL = server.URL
+	err := pb.PushLinkToChannel(sub.Channel.Tag, l.Title, l.URL, l.Body)
+	assert.NoError(t, err)
+}
+
+func TestPushNoteToChannel(t *testing.T) {
+	server := PushbulletResponseStub()
+	defer server.Close()
+	pb := New(k)
+	pb.Endpoint.URL = server.URL
+	err := pb.PushNoteToChannel(sub.Channel.Tag, n.Title, n.Body)
+	assert.NoError(t, err)
+}
+
 func TestPushSMS(t *testing.T) {
 	server := PushbulletResponseStub()
 	defer server.Close()
@@ -358,9 +376,9 @@ func TestSubscriptionWithName(t *testing.T) {
 	defer server.Close()
 	pb := New(k)
 	pb.Endpoint.URL = server.URL
-	sub, err := pb.Subscription(c.Name)
+	sub, err := pb.Subscription(c.Tag)
 	assert.NoError(t, err)
-	assert.Equal(t, c.Name, sub.Channel.Name)
+	assert.Equal(t, c.Tag, sub.Channel.Tag)
 	assert.Equal(t, pb, sub.Client)
 }
 
@@ -379,7 +397,7 @@ func TestSubscriptionPushNote(t *testing.T) {
 	defer server.Close()
 	pb := New(k)
 	pb.Endpoint.URL = server.URL
-	sub, _ := pb.Subscription(sub.Channel.Name)
+	sub, _ := pb.Subscription(sub.Channel.Tag)
 	err := sub.PushNote(n.Title, n.Body)
 	assert.NoError(t, err)
 }
@@ -389,7 +407,7 @@ func TestSubscriptionPushLink(t *testing.T) {
 	defer server.Close()
 	pb := New(k)
 	pb.Endpoint.URL = server.URL
-	sub, _ := pb.Subscription(sub.Channel.Name)
+	sub, _ := pb.Subscription(sub.Channel.Tag)
 	err := sub.PushLink(l.Title, l.URL, l.Body)
 	assert.NoError(t, err)
 }
