@@ -60,6 +60,23 @@ var s = &EphemeralPush{
 	Message:          "Hello!",
 }
 
+var c = &Channel{
+	Iden:        "ujxPklLhvyKsjAvkMyTVh6",
+	Tag:         "elonmusknews",
+	Name:        "Elon Musk News",
+	Description: "News about Elon Musk.",
+	ImageUrl:    "https://dl.pushbulletusercontent.com/StzRmwdkIe8gluBH3XoJ9HjRqjlUYSf4/musk.jpg",
+	WebsiteUrl:  "http://elonmuscknews.com",
+}
+
+var sub = &Subscription{
+	Active:   true,
+	Channel:  c,
+	Created:  1.412047948579029e+09,
+	Iden:     "ujpah72o0sjAoRtnM0jc",
+	Modified: 1.412047948579031e+09,
+}
+
 var k = "API_KEY"
 
 func PushbulletResponseStub() *httptest.Server {
@@ -78,6 +95,9 @@ func PushbulletResponseStub() *httptest.Server {
 		case "/ephemerals":
 			s, _ := json.Marshal(s)
 			resp = string(s)
+		case "/subscriptions":
+			sub, _ := json.Marshal(sub)
+			resp = `{ "subscriptions": [` + string(sub) + `] }`
 		default:
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
@@ -296,5 +316,80 @@ func TestPushSMS(t *testing.T) {
 	pb := New(k)
 	pb.Endpoint.URL = server.URL
 	err := pb.PushSMS(s.SourceUserIden, s.TargetDeviceIden, s.ConversationIden, s.Message)
+	assert.NoError(t, err)
+}
+
+func TestSubscriptions(t *testing.T) {
+	server := PushbulletResponseStub()
+	defer server.Close()
+	pb := New(k)
+	pb.Endpoint.URL = server.URL
+	sub.Client = pb
+	subs, err := pb.Subscriptions()
+	assert.NoError(t, err)
+	assert.Len(t, subs, 1)
+	assert.Equal(t, sub, subs[0])
+}
+
+func TestSubscriptionsError(t *testing.T) {
+	server := PushbulletErrResponseStub()
+	defer server.Close()
+	pb := New(k)
+	pb.Endpoint.URL = server.URL
+	subs, err := pb.Subscriptions()
+	assert.Error(t, err)
+	assert.Len(t, subs, 0)
+	assert.Equal(t, "500 Internal Server Error", err.Error())
+}
+
+func TestSubscriptionsJSONError(t *testing.T) {
+	server := PushbulletErrJSONResponseStub()
+	defer server.Close()
+	pb := New(k)
+	pb.Endpoint.URL = server.URL
+	subs, err := pb.Subscriptions()
+	assert.Error(t, err)
+	assert.Len(t, subs, 0)
+	assert.Equal(t, e, err)
+}
+
+func TestSubscriptionWithName(t *testing.T) {
+	server := PushbulletResponseStub()
+	defer server.Close()
+	pb := New(k)
+	pb.Endpoint.URL = server.URL
+	sub, err := pb.Subscription(c.Name)
+	assert.NoError(t, err)
+	assert.Equal(t, c.Name, sub.Channel.Name)
+	assert.Equal(t, pb, sub.Client)
+}
+
+func TestSubscriptionWithNameMissing(t *testing.T) {
+	server := PushbulletResponseStub()
+	defer server.Close()
+	pb := New(k)
+	pb.Endpoint.URL = server.URL
+	sub, err := pb.Subscription("MISSING")
+	assert.Error(t, err)
+	assert.Nil(t, sub)
+}
+
+func TestSubscriptionPushNote(t *testing.T) {
+	server := PushbulletResponseStub()
+	defer server.Close()
+	pb := New(k)
+	pb.Endpoint.URL = server.URL
+	sub, _ := pb.Subscription(sub.Channel.Name)
+	err := sub.PushNote(n.Title, n.Body)
+	assert.NoError(t, err)
+}
+
+func TestSubscriptionPushLink(t *testing.T) {
+	server := PushbulletResponseStub()
+	defer server.Close()
+	pb := New(k)
+	pb.Endpoint.URL = server.URL
+	sub, _ := pb.Subscription(sub.Channel.Name)
+	err := sub.PushLink(l.Title, l.URL, l.Body)
 	assert.NoError(t, err)
 }
