@@ -91,6 +91,10 @@ type deviceResponse struct {
 	SharedDevices []*Device `json:"shared_devices"`
 }
 
+type subscriptionResponse struct {
+	Subscriptions []*Subscription
+}
+
 func (c *Client) buildRequest(object string, data interface{}) *http.Request {
 	r, err := http.NewRequest("GET", c.Endpoint.URL+object, nil)
 	if err != nil {
@@ -245,6 +249,7 @@ func (c *Client) Push(endPoint string, data interface{}) error {
 // Note exposes the required and optional fields of the Pushbullet push type=note
 type Note struct {
 	Iden  string `json:"device_iden,omitempty"`
+	Tag   string `json:"channel_tag,omitempty"`
 	Type  string `json:"type"`
 	Title string `json:"title"`
 	Body  string `json:"body"`
@@ -261,9 +266,21 @@ func (c *Client) PushNote(iden string, title, body string) error {
 	return c.Push("/pushes", data)
 }
 
+// PushNoteToChannel pushes a note with title and body to a specific PushBullet channel.
+func (c *Client) PushNoteToChannel(tag string, title, body string) error {
+	data := Note{
+		Tag:   tag,
+		Type:  "note",
+		Title: title,
+		Body:  body,
+	}
+	return c.Push("/pushes", data)
+}
+
 // Link exposes the required and optional fields of the Pushbullet push type=link
 type Link struct {
-	Iden  string `json:"device_iden"`
+	Iden  string `json:"device_iden,omitempty"`
+	Tag   string `json:"channel_tag,omitempty"`
 	Type  string `json:"type"`
 	Title string `json:"title"`
 	URL   string `json:"url"`
@@ -274,6 +291,18 @@ type Link struct {
 func (c *Client) PushLink(iden, title, u, body string) error {
 	data := Link{
 		Iden:  iden,
+		Type:  "link",
+		Title: title,
+		URL:   u,
+		Body:  body,
+	}
+	return c.Push("/pushes", data)
+}
+
+// PushLinkToChannel pushes a link with a title and url to a specific PushBullet device.
+func (c *Client) PushLinkToChannel(tag, title, u, body string) error {
+	data := Link{
+		Tag:   tag,
 		Type:  "link",
 		Title: title,
 		URL:   u,
@@ -312,4 +341,83 @@ func (c *Client) PushSMS(userIden, deviceIden, phoneNumber, message string) erro
 		},
 	}
 	return c.Push("/ephemerals", data)
+}
+
+// Subscription object allows interaction with pushbullet channels
+type Subscription struct {
+	Iden     string   `json:"iden"`
+	Active   bool     `json:"active"`
+	Created  float32  `json:"created"`
+	Modified float32  `json:"modified"`
+	Muted    string   `json:"muted"`
+	Channel  *Channel `json:"channel"`
+	Client   *Client  `json:"-"`
+}
+
+// Channel object contains specific information about the pushbullet Channel
+type Channel struct {
+	Iden        string `json:"iden"`
+	Tag         string `json:"tag"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	ImageUrl    string `json:"image_url"`
+	WebsiteUrl  string `json:"website_url"`
+}
+
+func (c *Client) Subscriptions() ([]*Subscription, error) {
+	req := c.buildRequest("/subscriptions", nil)
+	resp, err := c.Client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		var errjson errorResponse
+		dec := json.NewDecoder(resp.Body)
+		err = dec.Decode(&errjson)
+		if err == nil {
+			return nil, &errjson.ErrResponse
+		}
+
+		return nil, errors.New(resp.Status)
+	}
+
+	var subResp subscriptionResponse
+	dec := json.NewDecoder(resp.Body)
+	err = dec.Decode(&subResp)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range subResp.Subscriptions {
+		subResp.Subscriptions[i].Client = c
+	}
+	subscriptions := append(subResp.Subscriptions)
+	return subscriptions, nil
+}
+
+// Subscription fetches an subscription with a given channel tag from PushBullet.
+func (c *Client) Subscription(tag string) (*Subscription, error) {
+	subs, err := c.Subscriptions()
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range subs {
+		if subs[i].Channel.Tag == tag {
+			subs[i].Client = c
+			return subs[i], nil
+		}
+	}
+	return nil, ErrDeviceNotFound
+}
+
+// PushNote sends a note to the specific Channel with the given title and body
+func (s *Subscription) PushNote(title, body string) error {
+	return s.Client.PushNoteToChannel(s.Channel.Tag, title, body)
+}
+
+// PushNote sends a link to the specific Channel with the given title, url and body
+func (s *Subscription) PushLink(title, u, body string) error {
+	return s.Client.PushLinkToChannel(s.Channel.Tag, title, u, body)
 }
