@@ -1,6 +1,7 @@
 language: go
-
 go:
-  - 1.4
-
-script: go test ./...
+  - tip
+before_install:
+  - go get github.com/mattn/goveralls
+script:
+  - goveralls --service=travis-ci --repotoken erZSOzTiDwnegx7UEkCTqGXCtK9940t52

@@ -2,6 +2,7 @@ go-pushbullet
 =============
 
 [![Build](https://img.shields.io/travis/xconstruct/go-pushbullet.svg?style=flat-square)](https://travis-ci.org/xconstruct/go-pushbullet)
+[![Coverage](https://img.shields.io/coveralls/xconstruct/go-pushbullet.svg?style=flat-square)](https://coveralls.io/github/xconstruct/go-pushbullet)
 [![API Documentation](https://img.shields.io/badge/api-GoDoc-blue.svg?style=flat-square)](https://godoc.org/github.com/xconstruct/go-pushbullet)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](http://opensource.org/licenses/MIT)
 
