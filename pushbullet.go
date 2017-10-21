@@ -67,7 +67,7 @@ type Device struct {
 	Fingerprint       string  `json:"fingerprint"`
 	KeyFingerprint    string  `json:"key_fingerprint"`
 	PushToken         string  `json:"push_token"`
-	HasSms            string  `json:"has_sms"`
+	HasSms            bool    `json:"has_sms"`
 	Client            *Client `json:"-"`
 }
 
