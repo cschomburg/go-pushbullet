@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/xconstruct/go-pushbullet"
 )
@@ -45,6 +46,14 @@ func main() {
 	}
 }
 
+func home() string {
+	home := os.Getenv("HOME")
+	if runtime.GOOS == "windows" && home == "" {
+		home = os.Getenv("USERPROFILE")
+	}
+	return home
+}
+
 func login() {
 	key := getArg(2, "")
 	var cfg Config
@@ -76,14 +85,12 @@ func login() {
 }
 
 func readConfig() (Config, error) {
-	cfgfile := filepath.Join(os.Getenv("HOME"), ".pushb.config.json")
+	cfgfile := filepath.Join(home(), ".pushb.config.json")
 	f, err := os.Open(cfgfile)
 	if err != nil {
 		return Config{}, err
 	}
-	defer func() {
-		f.Close()
-	}()
+	defer f.Close()
 
 	var cfg Config
 	dec := json.NewDecoder(f)
@@ -94,14 +101,12 @@ func readConfig() (Config, error) {
 }
 
 func writeConfig(cfg Config) {
-	cfgfile := filepath.Join(os.Getenv("HOME"), ".pushb.config.json")
+	cfgfile := filepath.Join(home(), ".pushb.config.json")
 	f, err := os.OpenFile(cfgfile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer func() {
-		f.Close()
-	}()
+	defer f.Close()
 
 	enc := json.NewEncoder(f)
 	if err = enc.Encode(cfg); err != nil {
