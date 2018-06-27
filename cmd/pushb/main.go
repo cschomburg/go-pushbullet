@@ -52,7 +52,6 @@ Commands:
     help       Shows this help
 
     link       Pushes a link to a device
-    list       Pushes a list to a device
     note       Pushes a note to a device
 
 Use "pushb help [topic] for more information about that topic.`)
