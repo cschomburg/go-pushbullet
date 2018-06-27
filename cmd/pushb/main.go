@@ -39,13 +39,6 @@ type Device struct {
 	Name string `json:"name"`
 }
 
-func getArg(i int, fallback string) string {
-	if len(os.Args) <= i {
-		return ""
-	}
-	return os.Args[i]
-}
-
 func main() {
 	flag.Usage = func() {
 		fmt.Println(`Pushb is a simple client for PushBullet.
@@ -67,7 +60,7 @@ Use "pushb help [topic] for more information about that topic.`)
 	flag.Var(&devices, "d", "Specify target devices")
 	flag.Parse()
 
-	cmd := getArg(1, "")
+	cmd := flag.Arg(0)
 
 	switch cmd {
 	case "login":
@@ -92,7 +85,7 @@ func home() string {
 }
 
 func login() {
-	key := getArg(2, "")
+	key := flag.Arg(1)
 	var cfg Config
 
 	cfg.ApiKey = key
@@ -168,8 +161,8 @@ func pushNote() {
 		log.Fatalln(err)
 	}
 
-	title := getArg(2, "")
-	body := getArg(3, "")
+	title := flag.Arg(1)
+	body := flag.Arg(2)
 	if body == "" {
 		body = title
 		title = ""
@@ -197,8 +190,8 @@ func pushLink() {
 		log.Fatalln(err)
 	}
 
-	title := getArg(2, "")
-	link := getArg(3, "")
+	title := flag.Arg(1)
+	link := flag.Arg(2)
 	if link == "" {
 		link = title
 		title = ""
