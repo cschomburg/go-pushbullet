@@ -177,9 +177,11 @@ func pushNote() {
 	}
 
 	pb := pushbullet.New(cfg.ApiKey)
-	err = pb.PushNote(cfg.Devices[0].Iden, title, body)
-	if err != nil {
-		log.Fatalln(err)
+	for _, d := range cfg.Devices {
+		err = pb.PushNote(d.Iden, title, body)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 }
 
@@ -196,9 +198,11 @@ func pushLink() {
 		title = ""
 	}
 	pb := pushbullet.New(cfg.ApiKey)
-	err = pb.PushLink(cfg.Devices[0].Iden, title, link, "")
-	if err != nil {
-		log.Fatalln(err)
+	for _, d := range cfg.Devices {
+		err = pb.PushLink(d.Iden, title, link, "")
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 }
 
