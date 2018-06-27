@@ -47,6 +47,23 @@ func getArg(i int, fallback string) string {
 }
 
 func main() {
+	flag.Usage = func() {
+		fmt.Println(`Pushb is a simple client for PushBullet.
+
+Usage:
+    pushb command [flags] [arguments]
+
+Commands:
+    login      Saves the api key in the config
+    devices    Shows a list of registered devices
+    help       Shows this help
+
+    link       Pushes a link to a device
+    list       Pushes a list to a device
+    note       Pushes a note to a device
+
+Use "pushb help [topic] for more information about that topic.`)
+	}
 	flag.Var(&devices, "d", "Specify target devices")
 	flag.Parse()
 
@@ -62,7 +79,7 @@ func main() {
 	case "devices":
 		listDevices()
 	default:
-		printHelp()
+		flag.Usage()
 	}
 }
 
@@ -201,28 +218,5 @@ func listDevices() {
 
 	for _, d := range cfg.Devices {
 		fmt.Printf("%10s\t%s\n", d.Iden, d.Name)
-	}
-}
-
-func printHelp() {
-	topic := getArg(2, "")
-
-	switch topic {
-	default:
-		fmt.Println(`Pushb is a simple client for PushBullet.
-
-Usage:
-    pushb command [flags] [arguments]
-
-Commands:
-    login      Saves the api key in the config
-    devices    Shows a list of registered devices
-    help       Shows this help
-
-    link       Pushes a link to a device
-    list       Pushes a list to a device
-    note       Pushes a note to a device
-	
-Use "pushb help [topic] for more information about that topic.`)
 	}
 }
