@@ -153,6 +153,10 @@ func pushNote() {
 
 	title := getArg(2, "")
 	body := getArg(3, "")
+	if body == "" {
+		body = title
+		title = ""
+	}
 
 	if body == "-" {
 		// read stdin
