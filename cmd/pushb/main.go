@@ -2,15 +2,32 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/xconstruct/go-pushbullet"
 )
+
+type Devices []string
+
+var (
+	devices Devices
+)
+
+func (ds *Devices) String() string {
+	return strings.Join([]string(*ds), ",")
+}
+
+func (ds *Devices) Set(value string) error {
+	*ds = append(*ds, value)
+	return nil
+}
 
 type Config struct {
 	ApiKey  string   `json:"api_key"`
@@ -22,15 +39,27 @@ type Device struct {
 	Name string `json:"name"`
 }
 
-func getArg(i int, fallback string) string {
-	if len(os.Args) <= i {
-		return ""
-	}
-	return os.Args[i]
-}
-
 func main() {
-	cmd := getArg(1, "")
+	flag.Usage = func() {
+		fmt.Println(`Pushb is a simple client for PushBullet.
+
+Usage:
+    pushb command [-d device] [arguments]
+
+Commands:
+    login      Saves the api key in the config
+    devices    Shows a list of registered devices
+    help       Shows this help
+
+    link       Pushes a link to a device
+    note       Pushes a note to a device
+
+Use "pushb help [topic] for more information about that topic.`)
+	}
+	flag.Var(&devices, "d", "Specify target devices")
+	flag.Parse()
+
+	cmd := flag.Arg(0)
 
 	switch cmd {
 	case "login":
@@ -42,7 +71,7 @@ func main() {
 	case "devices":
 		listDevices()
 	default:
-		printHelp()
+		flag.Usage()
 	}
 }
 
@@ -55,7 +84,7 @@ func home() string {
 }
 
 func login() {
-	key := getArg(2, "")
+	key := flag.Arg(1)
 	var cfg Config
 
 	cfg.ApiKey = key
@@ -97,6 +126,17 @@ func readConfig() (Config, error) {
 	if err = dec.Decode(&cfg); err != nil {
 		return Config{}, err
 	}
+	if len(devices) > 0 {
+		var ds []Device
+		for _, v1 := range cfg.Devices {
+			for _, v2 := range devices {
+				if v1.Iden == v2 {
+					ds = append(ds, v1)
+				}
+			}
+		}
+		cfg.Devices = ds
+	}
 	return cfg, nil
 }
 
@@ -120,8 +160,12 @@ func pushNote() {
 		log.Fatalln(err)
 	}
 
-	title := getArg(2, "")
-	body := getArg(3, "")
+	title := flag.Arg(1)
+	body := flag.Arg(2)
+	if body == "" {
+		body = title
+		title = ""
+	}
 
 	if body == "-" {
 		// read stdin
@@ -133,9 +177,11 @@ func pushNote() {
 	}
 
 	pb := pushbullet.New(cfg.ApiKey)
-	err = pb.PushNote(cfg.Devices[0].Iden, title, body)
-	if err != nil {
-		log.Fatalln(err)
+	for _, d := range cfg.Devices {
+		err = pb.PushNote(d.Iden, title, body)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 }
 
@@ -145,12 +191,18 @@ func pushLink() {
 		log.Fatalln(err)
 	}
 
-	title := getArg(2, "")
-	link := getArg(3, "")
+	title := flag.Arg(1)
+	link := flag.Arg(2)
+	if link == "" {
+		link = title
+		title = ""
+	}
 	pb := pushbullet.New(cfg.ApiKey)
-	err = pb.PushLink(cfg.Devices[0].Iden, title, link, "")
-	if err != nil {
-		log.Fatalln(err)
+	for _, d := range cfg.Devices {
+		err = pb.PushLink(d.Iden, title, link, "")
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 }
 
@@ -162,29 +214,5 @@ func listDevices() {
 
 	for _, d := range cfg.Devices {
 		fmt.Printf("%10s\t%s\n", d.Iden, d.Name)
-	}
-}
-
-func printHelp() {
-	topic := getArg(2, "")
-
-	switch topic {
-	default:
-		fmt.Println(`Pushb is a simple client for PushBullet.
-
-Usage:
-    pushb command [flags] [arguments]
-
-Commands:
-    login      Saves the api key in the config
-    devices    Shows a list of registered devices
-    help       Shows this help
-
-    address    Pushes an address to a device
-    link       Pushes a link to a device
-    list       Pushes a list to a device
-    note       Pushes a note to a device
-	
-Use "pushb help [topic] for more information about that topic.`)
 	}
 }
