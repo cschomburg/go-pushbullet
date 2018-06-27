@@ -51,7 +51,7 @@ func main() {
 		fmt.Println(`Pushb is a simple client for PushBullet.
 
 Usage:
-    pushb command [flags] [arguments]
+    pushb command [-d device] [arguments]
 
 Commands:
     login      Saves the api key in the config
