@@ -178,6 +178,10 @@ func pushLink() {
 
 	title := getArg(2, "")
 	link := getArg(3, "")
+	if link == "" {
+		link = title
+		title = ""
+	}
 	pb := pushbullet.New(cfg.ApiKey)
 	err = pb.PushLink(cfg.Devices[0].Iden, title, link, "")
 	if err != nil {
