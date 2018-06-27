@@ -2,15 +2,32 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/xconstruct/go-pushbullet"
 )
+
+type Devices []string
+
+var (
+	devices Devices
+)
+
+func (ds *Devices) String() string {
+	return strings.Join([]string(*ds), ",")
+}
+
+func (ds *Devices) Set(value string) error {
+	*ds = append(*ds, value)
+	return nil
+}
 
 type Config struct {
 	ApiKey  string   `json:"api_key"`
@@ -30,6 +47,9 @@ func getArg(i int, fallback string) string {
 }
 
 func main() {
+	flag.Var(&devices, "d", "Specify target devices")
+	flag.Parse()
+
 	cmd := getArg(1, "")
 
 	switch cmd {
@@ -96,6 +116,17 @@ func readConfig() (Config, error) {
 	dec := json.NewDecoder(f)
 	if err = dec.Decode(&cfg); err != nil {
 		return Config{}, err
+	}
+	if len(devices) > 0 {
+		var ds []Device
+		for _, v1 := range cfg.Devices {
+			for _, v2 := range devices {
+				if v1.Iden == v2 {
+					ds = append(ds, v1)
+				}
+			}
+		}
+		cfg.Devices = ds
 	}
 	return cfg, nil
 }
