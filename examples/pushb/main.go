@@ -12,11 +12,13 @@ import (
 	"github.com/durandj/go-pushbullet"
 )
 
+// Config is the PushBullet configuration.
 type Config struct {
-	ApiKey  string   `json:"api_key"`
+	APIKey  string   `json:"api_key"`
 	Devices []Device `json:"devices"`
 }
 
+// Device is the local PushBullet device configuration.
 type Device struct {
 	Iden string `json:"iden"`
 	Name string `json:"name"`
@@ -58,7 +60,7 @@ func login() {
 	key := getArg(2, "")
 	var cfg Config
 
-	cfg.ApiKey = key
+	cfg.APIKey = key
 	cfg.Devices = make([]Device, 0)
 
 	if key == "" {
@@ -132,7 +134,7 @@ func pushNote() {
 		body = string(b)
 	}
 
-	pb := pushbullet.New(cfg.ApiKey)
+	pb := pushbullet.New(cfg.APIKey)
 	err = pb.PushNote(cfg.Devices[0].Iden, title, body)
 	if err != nil {
 		log.Fatalln(err)
@@ -147,7 +149,7 @@ func pushLink() {
 
 	title := getArg(2, "")
 	link := getArg(3, "")
-	pb := pushbullet.New(cfg.ApiKey)
+	pb := pushbullet.New(cfg.APIKey)
 	err = pb.PushLink(cfg.Devices[0].Iden, title, link, "")
 	if err != nil {
 		log.Fatalln(err)
