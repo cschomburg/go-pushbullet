@@ -5,6 +5,7 @@ go-pushbullet
 [![Coverage](https://img.shields.io/coveralls/durandj/go-pushbullet.svg?style=flat-square)](https://coveralls.io/github/durandj/go-pushbullet)
 [![API Documentation](https://img.shields.io/badge/api-GoDoc-blue.svg?style=flat-square)](https://godoc.org/github.com/durandj/go-pushbullet)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](http://opensource.org/licenses/MIT)
+[![Go Report Card](https://goreportcard.com/badge/github.com/durandj/go-pushbullet)](https://goreportcard.com/report/github.com/durandj/go-pushbullet)
 
 Simple Go client for [Pushbullet](http://pushbullet.com), a webservice to push
 links, notes and more to your Android devices.
