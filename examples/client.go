@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/xconstruct/go-pushbullet"
+	"github.com/durandj/go-pushbullet"
 )
 
 func main() {
