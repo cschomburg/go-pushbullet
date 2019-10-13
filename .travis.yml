@@ -8,6 +8,9 @@ env:
   global:
     - GO111MODULE=on
 before_install:
+  - go get github.com/golangci/golangci-lint/cmd/golangci-lint
   - go get github.com/mattn/goveralls
+  - export PATH="$GOPATH/bin:$PATH"
 script:
+  - golangci-lint run --exclude-use-default=false --disable-all --enable errcheck --enable golint --enable gosec --enable govet --enable staticcheck
   - goveralls --service=travis-ci -package .

@@ -364,6 +364,7 @@ type Channel struct {
 	WebsiteUrl  string `json:"website_url"`
 }
 
+// Subscriptions gets the list of subscriptions.
 func (c *Client) Subscriptions() ([]*Subscription, error) {
 	req := c.buildRequest("/subscriptions", nil)
 	resp, err := c.Client.Do(req)
@@ -417,7 +418,7 @@ func (s *Subscription) PushNote(title, body string) error {
 	return s.Client.PushNoteToChannel(s.Channel.Tag, title, body)
 }
 
-// PushNote sends a link to the specific Channel with the given title, url and body
+// PushLink sends a link to the specific Channel with the given title, url and body
 func (s *Subscription) PushLink(title, u, body string) error {
 	return s.Client.PushLinkToChannel(s.Channel.Tag, title, u, body)
 }
