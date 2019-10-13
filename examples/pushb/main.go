@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/xconstruct/go-pushbullet"
+	"github.com/durandj/go-pushbullet"
 )
 
 type Config struct {
@@ -184,7 +184,7 @@ Commands:
     link       Pushes a link to a device
     list       Pushes a list to a device
     note       Pushes a note to a device
-	
+
 Use "pushb help [topic] for more information about that topic.`)
 	}
 }

@@ -1,19 +1,19 @@
 go-pushbullet
 =============
 
-[![Build](https://img.shields.io/travis/xconstruct/go-pushbullet.svg?style=flat-square)](https://travis-ci.org/xconstruct/go-pushbullet)
-[![Coverage](https://img.shields.io/coveralls/xconstruct/go-pushbullet.svg?style=flat-square)](https://coveralls.io/github/xconstruct/go-pushbullet)
-[![API Documentation](https://img.shields.io/badge/api-GoDoc-blue.svg?style=flat-square)](https://godoc.org/github.com/xconstruct/go-pushbullet)
+[![Build](https://img.shields.io/travis/durandj/go-pushbullet.svg?style=flat-square)](https://travis-ci.com/durandj/go-pushbullet)
+[![Coverage](https://img.shields.io/coveralls/durandj/go-pushbullet.svg?style=flat-square)](https://coveralls.io/github/durandj/go-pushbullet)
+[![API Documentation](https://img.shields.io/badge/api-GoDoc-blue.svg?style=flat-square)](https://godoc.org/github.com/durandj/go-pushbullet)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](http://opensource.org/licenses/MIT)
 
 Simple Go client for [Pushbullet](http://pushbullet.com), a webservice to push
 links, notes and more to your Android devices.
 
-Documentation available under: http://godoc.org/github.com/xconstruct/go-pushbullet
+Documentation available under: http://godoc.org/github.com/durandj/go-pushbullet
 
 ### Install ###
 
-	go get "github.com/xconstruct/go-pushbullet"
+	go get "github.com/durandj/go-pushbullet"
 
 ### Example ###
 
@@ -41,7 +41,7 @@ if err != nil {
 }
 ```
 
-You can also retrieve a pushbullet device by nickname, and call the same methods as you would with the pushbullet client  
+You can also retrieve a pushbullet device by nickname, and call the same methods as you would with the pushbullet client
 ```go
 dev, err := pb.Device("My Phone")
 if err != nil {
@@ -54,7 +54,7 @@ if err != nil {
 }
 ```
 
-Channels are also supported in a similar manner  
+Channels are also supported in a similar manner
 ```go
 subs, err := pb.Subscriptions()
 if err != nil {
