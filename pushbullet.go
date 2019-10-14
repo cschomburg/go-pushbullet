@@ -213,9 +213,8 @@ func (c *Client) Me() (user *User, err error) {
 	}
 
 	defer func() {
-		err = resp.Body.Close()
-		if err != nil {
-			err = fmt.Errorf("Unable to close connection to PushBullet: %w", err)
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			err = fmt.Errorf("Unable to close connection to PushBullet: %w", closeErr)
 		}
 	}()
 
@@ -250,9 +249,8 @@ func (c *Client) Push(endPoint string, data interface{}) (err error) {
 	}
 
 	defer func() {
-		err = resp.Body.Close()
-		if err != nil {
-			err = fmt.Errorf("Unable to close connection to PushBullet: %w", err)
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			err = fmt.Errorf("Unable to close connection to PushBullet: %w", closeErr)
 		}
 	}()
 
@@ -397,9 +395,8 @@ func (c *Client) Subscriptions() ([]*Subscription, error) {
 	}
 
 	defer func() {
-		err = resp.Body.Close()
-		if err != nil {
-			err = fmt.Errorf("Unable to close connection to PushBullet: %w", err)
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			err = fmt.Errorf("Unable to close connection to PushBullet: %w", closeErr)
 		}
 	}()
 
