@@ -7,7 +7,8 @@ Example client:
 	...
 	err = pb.PushNote(devices[0].Iden, "Hello!", "Hi from go-pushbullet!")
 
-The API is document at https://docs.pushbullet.com/http/ .  At the moment, it only supports querying devices and sending notifications.
+The API is document at https://docs.pushbullet.com/http/ .
+At the moment, it only supports querying devices and sending notifications.
 
 */
 package pushbullet
@@ -17,6 +18,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -110,7 +112,7 @@ func (c *Client) buildRequest(object string, data interface{}) *http.Request {
 		r.Header.Set("Content-Type", "application/json")
 		var b bytes.Buffer
 		enc := json.NewEncoder(&b)
-		enc.Encode(data)
+		_ = enc.Encode(data)
 		r.Body = ioutil.NopCloser(&b)
 	}
 
@@ -118,13 +120,19 @@ func (c *Client) buildRequest(object string, data interface{}) *http.Request {
 }
 
 // Devices fetches a list of devices from PushBullet.
-func (c *Client) Devices() ([]*Device, error) {
+func (c *Client) Devices() (devices []*Device, err error) {
 	req := c.buildRequest("/devices", nil)
 	resp, err := c.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			devices = nil
+			err = fmt.Errorf("Unable to close connection to PushBullet: %w", closeErr)
+		}
+	}()
+
 	if resp.StatusCode != http.StatusOK {
 		var errjson errorResponse
 		dec := json.NewDecoder(resp.Body)
@@ -143,10 +151,13 @@ func (c *Client) Devices() ([]*Device, error) {
 		return nil, err
 	}
 
-	for i := range devResp.Devices {
-		devResp.Devices[i].Client = c
+	devices = devResp.Devices
+	for i := range devices {
+		devices[i].Client = c
 	}
-	devices := append(devResp.Devices, devResp.SharedDevices...)
+
+	devices = append(devices, devResp.SharedDevices...)
+
 	return devices, nil
 }
 
@@ -189,18 +200,24 @@ type User struct {
 	Created         float64     `json:"created"`
 	Modified        float64     `json:"modified"`
 	Name            string      `json:"name"`
-	ImageUrl        string      `json:"image_url"`
+	ImageURL        string      `json:"image_url"`
 	Preferences     interface{} `json:"preferences"`
 }
 
 // Me returns the user object for the pushbullet user
-func (c *Client) Me() (*User, error) {
+func (c *Client) Me() (user *User, err error) {
 	req := c.buildRequest("/users/me", nil)
 	resp, err := c.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			err = fmt.Errorf("Unable to close connection to PushBullet: %w", closeErr)
+		}
+	}()
+
 	if resp.StatusCode != http.StatusOK {
 		var errjson errorResponse
 		dec := json.NewDecoder(resp.Body)
@@ -224,13 +241,18 @@ func (c *Client) Me() (*User, error) {
 // Push pushes the data to a specific device registered with PushBullet.  The
 // 'data' parameter is marshaled to JSON and sent as the request body.  Most
 // users should call one of PusNote, PushLink, PushAddress, or PushList.
-func (c *Client) Push(endPoint string, data interface{}) error {
+func (c *Client) Push(endPoint string, data interface{}) (err error) {
 	req := c.buildRequest(endPoint, data)
 	resp, err := c.Client.Do(req)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			err = fmt.Errorf("Unable to close connection to PushBullet: %w", closeErr)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		var errResponse errorResponse
@@ -360,17 +382,24 @@ type Channel struct {
 	Tag         string `json:"tag"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	ImageUrl    string `json:"image_url"`
-	WebsiteUrl  string `json:"website_url"`
+	ImageURL    string `json:"image_url"`
+	WebsiteURL  string `json:"website_url"`
 }
 
+// Subscriptions gets the list of subscriptions.
 func (c *Client) Subscriptions() ([]*Subscription, error) {
 	req := c.buildRequest("/subscriptions", nil)
 	resp, err := c.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			err = fmt.Errorf("Unable to close connection to PushBullet: %w", closeErr)
+		}
+	}()
+
 	if resp.StatusCode != http.StatusOK {
 		var errjson errorResponse
 		dec := json.NewDecoder(resp.Body)
@@ -392,7 +421,7 @@ func (c *Client) Subscriptions() ([]*Subscription, error) {
 	for i := range subResp.Subscriptions {
 		subResp.Subscriptions[i].Client = c
 	}
-	subscriptions := append(subResp.Subscriptions)
+	subscriptions := subResp.Subscriptions
 	return subscriptions, nil
 }
 
@@ -417,7 +446,7 @@ func (s *Subscription) PushNote(title, body string) error {
 	return s.Client.PushNoteToChannel(s.Channel.Tag, title, body)
 }
 
-// PushNote sends a link to the specific Channel with the given title, url and body
+// PushLink sends a link to the specific Channel with the given title, url and body
 func (s *Subscription) PushLink(title, u, body string) error {
 	return s.Client.PushLinkToChannel(s.Channel.Tag, title, u, body)
 }

@@ -40,7 +40,7 @@ var m = &User{
 	Email:           "elon@teslamotors.com",
 	EmailNormalized: "elon@teslamotors.com",
 	Iden:            "ujpah72o0",
-	ImageUrl:        "https://static.pushbullet.com/missing-image/55a7dc-45",
+	ImageURL:        "https://static.pushbullet.com/missing-image/55a7dc-45",
 	Modified:        1.441054560741007e+09,
 	Name:            "Elon Musk",
 }
@@ -66,8 +66,8 @@ var c = &Channel{
 	Tag:         "elonmusknews",
 	Name:        "Elon Musk News",
 	Description: "News about Elon Musk.",
-	ImageUrl:    "https://dl.pushbulletusercontent.com/StzRmwdkIe8gluBH3XoJ9HjRqjlUYSf4/musk.jpg",
-	WebsiteUrl:  "http://elonmuscknews.com",
+	ImageURL:    "https://dl.pushbulletusercontent.com/StzRmwdkIe8gluBH3XoJ9HjRqjlUYSf4/musk.jpg",
+	WebsiteURL:  "http://elonmuscknews.com",
 }
 
 var sub = &Subscription{
@@ -104,7 +104,7 @@ func PushbulletResponseStub() *httptest.Server {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(resp))
+		_, _ = w.Write([]byte(resp))
 	}))
 }
 
@@ -142,9 +142,9 @@ func TestBuildRequest(t *testing.T) {
 	pb := New(k)
 	req := pb.buildRequest("/pushes", n)
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(req.Body)
+	_, _ = buf.ReadFrom(req.Body)
 	var note Note
-	json.Unmarshal(buf.Bytes(), &note)
+	_ = json.Unmarshal(buf.Bytes(), &note)
 	assert.Equal(t, "POST", req.Method)
 	assert.Equal(t, n, &note)
 }
