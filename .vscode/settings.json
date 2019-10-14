@@ -1,5 +1,8 @@
 {
   "go.lintTool": "golangci-lint",
+  "go.lintFlags": [
+    "--fast"
+  ],
   "go.useLanguageServer": true,
   "go.alternateTools": {
       "go-langserver": "gopls"
@@ -7,5 +10,6 @@
   "go.languageServerExperimentalFeatures": {
       "format": true,
       "autoComplete": true
-  }
+  },
+  "go.autocompleteUnimportedPackages": true
 }

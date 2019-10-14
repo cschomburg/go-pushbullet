@@ -12,5 +12,5 @@ before_install:
   - go get github.com/mattn/goveralls
   - export PATH="$GOPATH/bin:$PATH"
 script:
-  - golangci-lint run --exclude-use-default=false --disable-all --enable errcheck --enable golint --enable gosec --enable govet --enable staticcheck
+  - golangci-lint run
   - goveralls --service=travis-ci -package .

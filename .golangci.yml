@@ -1,0 +1,27 @@
+linters:
+  # disable-all: true
+
+  enable:
+    - bodyclose
+    - errcheck
+    - dupl
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - golint
+    - gosec
+    - govet
+    - lll
+    - nakedret
+    - prealloc
+    - scopelint
+    - staticcheck
+    - unconvert
+    - unparam
+    - whitespace
+
+issues:
+  exclude-use-default: false
