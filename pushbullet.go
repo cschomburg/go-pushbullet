@@ -25,6 +25,11 @@ import (
 	"net/url"
 )
 
+const (
+	// AllDevices can be used an iden for sending a push to all devices
+	AllDevices = ""
+)
+
 // ErrDeviceNotFound is raised when device nickname is not found on pusbullet server
 var ErrDeviceNotFound = errors.New("Device not found")
 
