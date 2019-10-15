@@ -15,6 +15,7 @@ package pushbullet
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -97,14 +98,14 @@ type subscriptionResponse struct {
 	Subscriptions []*Subscription
 }
 
-func (c *Client) buildRequest(object string, data interface{}) *http.Request {
-	r, err := http.NewRequest("GET", c.Endpoint.URL+object, nil)
+func (client *Client) buildRequest(ctx context.Context, object string, data interface{}) *http.Request {
+	r, err := http.NewRequestWithContext(ctx, "GET", client.Endpoint.URL+object, nil)
 	if err != nil {
 		panic(err)
 	}
 
 	// appengine sdk requires us to set the auth header by hand
-	u := url.UserPassword(c.Key, "")
+	u := url.UserPassword(client.Key, "")
 	r.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(u.String())))
 
 	if data != nil {
@@ -120,16 +121,21 @@ func (c *Client) buildRequest(object string, data interface{}) *http.Request {
 }
 
 // Devices fetches a list of devices from PushBullet.
-func (c *Client) Devices() (devices []*Device, err error) {
-	req := c.buildRequest("/devices", nil)
-	resp, err := c.Client.Do(req)
+func (client *Client) Devices() ([]*Device, error) {
+	return client.DevicesWithContext(context.Background())
+}
+
+// DevicesWithContext fetches a list of devices from PushBullet.
+func (client *Client) DevicesWithContext(ctx context.Context) (devices []*Device, retErr error) {
+	req := client.buildRequest(ctx, "/devices", nil)
+	resp, err := client.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
 			devices = nil
-			err = fmt.Errorf("Unable to close connection to PushBullet: %w", closeErr)
+			retErr = fmt.Errorf("Unable to close connection to PushBullet: %w", closeErr)
 		}
 	}()
 
@@ -153,7 +159,7 @@ func (c *Client) Devices() (devices []*Device, err error) {
 
 	devices = devResp.Devices
 	for i := range devices {
-		devices[i].Client = c
+		devices[i].Client = client
 	}
 
 	devices = append(devices, devResp.SharedDevices...)
@@ -162,15 +168,20 @@ func (c *Client) Devices() (devices []*Device, err error) {
 }
 
 // Device fetches an device with a given nickname from PushBullet.
-func (c *Client) Device(nickname string) (*Device, error) {
-	devices, err := c.Devices()
+func (client *Client) Device(nickname string) (*Device, error) {
+	return client.DeviceWithContext(context.Background(), nickname)
+}
+
+// DeviceWithContext fetches an device with a given nickname from PushBullet.
+func (client *Client) DeviceWithContext(ctx context.Context, nickname string) (*Device, error) {
+	devices, err := client.DevicesWithContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	for i := range devices {
 		if devices[i].Nickname == nickname {
-			devices[i].Client = c
+			devices[i].Client = client
 			return devices[i], nil
 		}
 	}
@@ -178,18 +189,38 @@ func (c *Client) Device(nickname string) (*Device, error) {
 }
 
 // PushNote sends a note to the specific device with the given title and body
-func (d *Device) PushNote(title, body string) error {
-	return d.Client.PushNote(d.Iden, title, body)
+func (device *Device) PushNote(title string, body string) error {
+	return device.PushNoteWithContext(context.Background(), title, body)
+}
+
+// PushNoteWithContext sends a note to the specific device with the given title and body
+func (device *Device) PushNoteWithContext(ctx context.Context, title string, body string) error {
+	return device.Client.PushNote(device.Iden, title, body)
 }
 
 // PushLink sends a link to the specific device with the given title and url
-func (d *Device) PushLink(title, u, body string) error {
-	return d.Client.PushLink(d.Iden, title, u, body)
+func (device *Device) PushLink(title string, u string, body string) error {
+	return device.PushLinkWithContext(context.Background(), title, u, body)
+}
+
+// PushLinkWithContext sends a link to the specific device with the given title and url
+func (device *Device) PushLinkWithContext(ctx context.Context, title string, u string, body string) error {
+	return device.Client.PushLink(device.Iden, title, u, body)
 }
 
 // PushSMS sends an SMS to the specific user from the device with the given title and url
-func (d *Device) PushSMS(deviceIden, phoneNumber, message string) error {
-	return d.Client.PushSMS(d.Iden, deviceIden, phoneNumber, message)
+func (device *Device) PushSMS(deviceIden string, phoneNumber string, message string) error {
+	return device.PushSMSWithContext(context.Background(), deviceIden, phoneNumber, message)
+}
+
+// PushSMSWithContext sends an SMS to the specific user from the device with the given title and url
+func (device *Device) PushSMSWithContext(
+	ctx context.Context,
+	deviceIden string,
+	phoneNumber string,
+	message string,
+) error {
+	return device.Client.PushSMS(device.Iden, deviceIden, phoneNumber, message)
 }
 
 // User represents the User object for pushbullet
@@ -205,16 +236,21 @@ type User struct {
 }
 
 // Me returns the user object for the pushbullet user
-func (c *Client) Me() (user *User, err error) {
-	req := c.buildRequest("/users/me", nil)
-	resp, err := c.Client.Do(req)
+func (client *Client) Me() (*User, error) {
+	return client.MeWithContext(context.Background())
+}
+
+// MeWithContext returns the user object for the pushbullet user
+func (client *Client) MeWithContext(ctx context.Context) (user *User, retErr error) {
+	req := client.buildRequest(ctx, "/users/me", nil)
+	resp, err := client.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
 	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
-			err = fmt.Errorf("Unable to close connection to PushBullet: %w", closeErr)
+			retErr = fmt.Errorf("Unable to close connection to PushBullet: %w", closeErr)
 		}
 	}()
 
@@ -235,22 +271,34 @@ func (c *Client) Me() (user *User, err error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &userResponse, nil
 }
 
 // Push pushes the data to a specific device registered with PushBullet.  The
 // 'data' parameter is marshaled to JSON and sent as the request body.  Most
 // users should call one of PusNote, PushLink, PushAddress, or PushList.
-func (c *Client) Push(endPoint string, data interface{}) (err error) {
-	req := c.buildRequest(endPoint, data)
-	resp, err := c.Client.Do(req)
+func (client *Client) Push(endPoint string, data interface{}) (retErr error) {
+	return client.PushWithContext(context.Background(), endPoint, data)
+}
+
+// PushWithContext pushes the data to a specific device registered with PushBullet.  The
+// 'data' parameter is marshaled to JSON and sent as the request body.  Most
+// users should call one of PusNote, PushLink, PushAddress, or PushList.
+func (client *Client) PushWithContext(
+	ctx context.Context,
+	endPoint string,
+	data interface{},
+) (retErr error) {
+	req := client.buildRequest(ctx, endPoint, data)
+	resp, err := client.Client.Do(req)
 	if err != nil {
 		return err
 	}
 
 	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
-			err = fmt.Errorf("Unable to close connection to PushBullet: %w", closeErr)
+			retErr = fmt.Errorf("Unable to close connection to PushBullet: %w", closeErr)
 		}
 	}()
 
@@ -278,25 +326,47 @@ type Note struct {
 }
 
 // PushNote pushes a note with title and body to a specific PushBullet device.
-func (c *Client) PushNote(iden string, title, body string) error {
+func (client *Client) PushNote(iden string, title string, body string) error {
+	return client.PushNoteWithContext(context.Background(), iden, title, body)
+}
+
+// PushNoteWithContext pushes a note with title and body to a specific PushBullet device.
+func (client *Client) PushNoteWithContext(
+	ctx context.Context,
+	iden string,
+	title string,
+	body string,
+) error {
 	data := Note{
 		Iden:  iden,
 		Type:  "note",
 		Title: title,
 		Body:  body,
 	}
-	return c.Push("/pushes", data)
+
+	return client.PushWithContext(ctx, "/pushes", data)
 }
 
 // PushNoteToChannel pushes a note with title and body to a specific PushBullet channel.
-func (c *Client) PushNoteToChannel(tag string, title, body string) error {
+func (client *Client) PushNoteToChannel(tag string, title string, body string) error {
+	return client.PushNoteToChannelWithContext(context.Background(), tag, title, body)
+}
+
+// PushNoteToChannelWithContext pushes a note with title and body to a specific PushBullet channel.
+func (client *Client) PushNoteToChannelWithContext(
+	ctx context.Context,
+	tag string,
+	title string,
+	body string,
+) error {
 	data := Note{
 		Tag:   tag,
 		Type:  "note",
 		Title: title,
 		Body:  body,
 	}
-	return c.Push("/pushes", data)
+
+	return client.PushWithContext(ctx, "/pushes", data)
 }
 
 // Link exposes the required and optional fields of the Pushbullet push type=link
@@ -310,7 +380,18 @@ type Link struct {
 }
 
 // PushLink pushes a link with a title and url to a specific PushBullet device.
-func (c *Client) PushLink(iden, title, u, body string) error {
+func (client *Client) PushLink(iden string, title string, u string, body string) error {
+	return client.PushLinkWithContext(context.Background(), iden, title, u, body)
+}
+
+// PushLinkWithContext pushes a link with a title and url to a specific PushBullet device.
+func (client *Client) PushLinkWithContext(
+	ctx context.Context,
+	iden string,
+	title string,
+	u string,
+	body string,
+) error {
 	data := Link{
 		Iden:  iden,
 		Type:  "link",
@@ -318,11 +399,23 @@ func (c *Client) PushLink(iden, title, u, body string) error {
 		URL:   u,
 		Body:  body,
 	}
-	return c.Push("/pushes", data)
+
+	return client.PushWithContext(ctx, "/pushes", data)
 }
 
 // PushLinkToChannel pushes a link with a title and url to a specific PushBullet device.
-func (c *Client) PushLinkToChannel(tag, title, u, body string) error {
+func (client *Client) PushLinkToChannel(tag string, title string, u string, body string) error {
+	return client.PushLinkToChannelWithContext(context.Background(), tag, title, u, body)
+}
+
+// PushLinkToChannelWithContext pushes a link with a title and url to a specific PushBullet device.
+func (client *Client) PushLinkToChannelWithContext(
+	ctx context.Context,
+	tag string,
+	title string,
+	u string,
+	body string,
+) error {
 	data := Link{
 		Tag:   tag,
 		Type:  "link",
@@ -330,7 +423,8 @@ func (c *Client) PushLinkToChannel(tag, title, u, body string) error {
 		URL:   u,
 		Body:  body,
 	}
-	return c.Push("/pushes", data)
+
+	return client.PushWithContext(ctx, "/pushes", data)
 }
 
 // EphemeralPush  exposes the required fields of the Pushbullet ephemeral object
@@ -350,7 +444,29 @@ type Ephemeral struct {
 }
 
 // PushSMS sends an SMS message with pushbullet
-func (c *Client) PushSMS(userIden, deviceIden, phoneNumber, message string) error {
+func (client *Client) PushSMS(
+	userIden string,
+	deviceIden string,
+	phoneNumber string,
+	message string,
+) error {
+	return client.PushSMSWithContext(
+		context.Background(),
+		userIden,
+		deviceIden,
+		phoneNumber,
+		message,
+	)
+}
+
+// PushSMSWithContext sends an SMS message with pushbullet
+func (client *Client) PushSMSWithContext(
+	ctx context.Context,
+	userIden string,
+	deviceIden string,
+	phoneNumber string,
+	message string,
+) error {
 	data := Ephemeral{
 		Type: "push",
 		Push: EphemeralPush{
@@ -362,7 +478,8 @@ func (c *Client) PushSMS(userIden, deviceIden, phoneNumber, message string) erro
 			Message:          message,
 		},
 	}
-	return c.Push("/ephemerals", data)
+
+	return client.PushWithContext(ctx, "/ephemerals", data)
 }
 
 // Subscription object allows interaction with pushbullet channels
@@ -387,16 +504,21 @@ type Channel struct {
 }
 
 // Subscriptions gets the list of subscriptions.
-func (c *Client) Subscriptions() ([]*Subscription, error) {
-	req := c.buildRequest("/subscriptions", nil)
-	resp, err := c.Client.Do(req)
+func (client *Client) Subscriptions() (subscriptions []*Subscription, retErr error) {
+	return client.SubscriptionsWithContext(context.Background())
+}
+
+// SubscriptionsWithContext gets the list of subscriptions.
+func (client *Client) SubscriptionsWithContext(ctx context.Context) (subscriptions []*Subscription, retErr error) {
+	req := client.buildRequest(ctx, "/subscriptions", nil)
+	resp, err := client.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 
 	defer func() {
 		if closeErr := resp.Body.Close(); closeErr != nil {
-			err = fmt.Errorf("Unable to close connection to PushBullet: %w", closeErr)
+			retErr = fmt.Errorf("Unable to close connection to PushBullet: %w", closeErr)
 		}
 	}()
 
@@ -419,22 +541,27 @@ func (c *Client) Subscriptions() ([]*Subscription, error) {
 	}
 
 	for i := range subResp.Subscriptions {
-		subResp.Subscriptions[i].Client = c
+		subResp.Subscriptions[i].Client = client
 	}
-	subscriptions := subResp.Subscriptions
+	subscriptions = subResp.Subscriptions
 	return subscriptions, nil
 }
 
 // Subscription fetches an subscription with a given channel tag from PushBullet.
-func (c *Client) Subscription(tag string) (*Subscription, error) {
-	subs, err := c.Subscriptions()
+func (client *Client) Subscription(tag string) (*Subscription, error) {
+	return client.SubscriptionWithContext(context.Background(), tag)
+}
+
+// SubscriptionWithContext fetches an subscription with a given channel tag from PushBullet.
+func (client *Client) SubscriptionWithContext(ctx context.Context, tag string) (*Subscription, error) {
+	subs, err := client.SubscriptionsWithContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	for i := range subs {
 		if subs[i].Channel.Tag == tag {
-			subs[i].Client = c
+			subs[i].Client = client
 			return subs[i], nil
 		}
 	}
@@ -442,11 +569,26 @@ func (c *Client) Subscription(tag string) (*Subscription, error) {
 }
 
 // PushNote sends a note to the specific Channel with the given title and body
-func (s *Subscription) PushNote(title, body string) error {
-	return s.Client.PushNoteToChannel(s.Channel.Tag, title, body)
+func (subscription *Subscription) PushNote(title string, body string) error {
+	return subscription.PushNoteWithContext(context.Background(), title, body)
+}
+
+// PushNoteWithContext sends a note to the specific Channel with the given title and body
+func (subscription *Subscription) PushNoteWithContext(ctx context.Context, title string, body string) error {
+	return subscription.Client.PushNoteToChannel(subscription.Channel.Tag, title, body)
 }
 
 // PushLink sends a link to the specific Channel with the given title, url and body
-func (s *Subscription) PushLink(title, u, body string) error {
-	return s.Client.PushLinkToChannel(s.Channel.Tag, title, u, body)
+func (subscription *Subscription) PushLink(title string, u string, body string) error {
+	return subscription.PushLinkWithContext(context.Background(), title, u, body)
+}
+
+// PushLinkWithContext sends a link to the specific Channel with the given title, url and body
+func (subscription *Subscription) PushLinkWithContext(
+	ctx context.Context,
+	title string,
+	u string,
+	body string,
+) error {
+	return subscription.Client.PushLinkToChannel(subscription.Channel.Tag, title, u, body)
 }
